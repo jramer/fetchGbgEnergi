@@ -18,7 +18,8 @@ var anlId = casper.cli.raw.get('anlid');//Får inte hela anlid med bara enkel ge
 var anvNamn = casper.cli.get(0);
 var losenord = casper.cli.get(1);
 var now = new Date();
-var startDag = now.getDate() -1;
+var startDag = now.getDate() -1; // Day of the month
+var dagLank;
 
 casper.options.viewportSize = {width: 1280, height: 673};
 casper.start('https://gbgc.goteborgenergi.se/main/default.asp');
@@ -68,7 +69,8 @@ casper.waitForSelector(x("//a[normalize-space(text())='Din elanvändning']"),
 casper.then(function() {
 	energiLank = this.getElementAttribute("a[target='StatisticsWin']", "href");
     this.echo("LÄNK: " + energiLank);
-	casper.open(energiLank);
+	// @todo Skapa funktionalitet för att validera om länken är riktig, på så sätt kan man återanvända länken ifall den är giltig utan att behöva logga in via den första sidan
+    casper.open(energiLank);
 });
 casper.waitForSelector(x("//a[normalize-space(text())='"+ anlId +"']"),
     function success() {
@@ -80,20 +82,34 @@ casper.waitForSelector(x("//a[normalize-space(text())='"+ anlId +"']"),
 });
 casper.waitForSelector("#cphBody_lbDay",
     function success() {
-        this.test.assertExists("#cphBody_lbDay");
-        this.click("#cphBody_lbDay");//Misslyckas varje gång...
+        this.test.assertExists("#cphBody_lbDay", "Dagslänk finns");
+        dagLank = this.evaluate(function() {
+            return __utils__.findOne('#cphBody_lbDay').getAttribute('href');
+        });
+
+        this.evaluate(function() {
+            // Alternativet mot att "klicka" på länken är att lägga till lyssnare på ajax-svaret, där finns tabellen i klartext
+            eval(dagLank);
+        });
+        // this.click("#cphBody_lbDay");//Misslyckas varje gång...
     },
     function fail() {
         this.test.assertExists("#cphBody_lbDay");
 });
 casper.wait(5000);
-casper.waitForSelector("#cphBody_UcDailyPicker_lnkDay"+(startDag+1),
+
+// Här kommer nu tabellen över dagar att treverseras
+// @todo Hämta antal möjliga dagar
+// Läs markerad
+// Klicka på "nästkommande"
+casper.waitForSelector(".existingValue.selectedDay",
     function success() {
-        this.test.assertExists("#cphBody_UcDailyPicker_lnkDay"+(startDag+1));
-        this.click("#cphBody_UcDailyPicker_lnkDay"+(startDag+1));
+        this.test.assertExists(".existingValue.selectedDay");
+        // Klick skall endast ske i nästa iteration
+        // this.click(".existingValue.selectedDay"));
     },
     function fail() {
-        this.test.assertExists("#cphBody_UcDailyPicker_lnkDay"+(startDag+1));
+        this.test.assertExists(".existingValue.selectedDay");
 });
 casper.wait(1000);
 casper.then(function() {
