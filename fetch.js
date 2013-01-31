@@ -12,7 +12,7 @@ var casper = require('casper').create(
 }
 );
 if(!(casper.cli.has(0) && casper.cli.has(1) && casper.cli.has('anlid'))) {
-	casper.echo("Ange anläggningsid, användarnamn och lösenord som argument till scriptet. Ex. casperjs fetch.js namn lösen --anlid=1234567890").exit();
+	casper.echo("\nAnge anläggningsid, användarnamn och lösenord som argument till scriptet.\nEx. casperjs fetch.js namn lösen --anlid=1234567890\n\nFick:\n"+casper.cli.get(0)+"\n"+casper.cli.get(1)+"\n"+casper.cli.raw.get('anlid')).exit();
 }
 var anlId = casper.cli.raw.get('anlid');//Får inte hela anlid med bara enkel get...
 var anvNamn = casper.cli.get(0);
@@ -81,7 +81,16 @@ casper.waitForSelector(x("//a[normalize-space(text())='"+ anlId +"']"),
 casper.waitForSelector("#cphBody_lbDay",
     function success() {
         this.test.assertExists("#cphBody_lbDay");
-        this.click("#cphBody_lbDay");//Misslyckas varje gång...
+		this.evaluate(function() {
+		    $('#__EVENTTARGET').val('ctl00$cphBody$lbDay');
+			$('#form1').submit();
+			//TESTADE...
+			//__doPostBack('ctl00$cphBody$lbDay','');
+			//document.querySelector("#cphBody_lbDay").click();
+			//$("#cphBody_lbDay").attr('onclick',$("#cphBody_lbDay").attr('href');
+			//__utils__.mouseEvent('click',"#cphBody_lbDay");
+		});
+        //this.click("#cphBody_lbDay");//Misslyckas varje gång...
     },
     function fail() {
         this.test.assertExists("#cphBody_lbDay");
