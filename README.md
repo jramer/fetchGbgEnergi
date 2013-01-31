@@ -3,13 +3,13 @@ fetchGbgEnergi
 
 Hämtar energiförbrukning från Göteborgs Energi mha PhantomJS + CasperJS.
 
-<<<<<<< HEAD
 Körs genom:
 ~~~~
 casperjs fetch.js anvNamn lösenord --anlid=01234567890
 ~~~~
 =======
 Problem:
+~~~~
 
 //<![CDATA[
 var theForm = document.forms['form1'];
@@ -24,4 +24,4 @@ function __doPostBack(eventTarget, eventArgument) {
     }
 }
 //]]>
->>>>>>> Försöker hitta en lösning på klickproblemet men lyckas ej...
+~~~~
