@@ -7,10 +7,11 @@ var energiLank;
 var casper = require('casper').create(
 {
 	clientScripts: ["jquery-1.9.0.min.js"]
-//    verbose: true,
-//    logLevel: "debug"
+    //verbose: true,
+    //logLevel: "debug"
 }
 );
+phantom.cookiesEnabled = true;
 if(!(casper.cli.has(0) && casper.cli.has(1) && casper.cli.has('anlid'))) {
 	casper.echo("\nAnge anläggningsid, användarnamn och lösenord som argument till scriptet.\nEx. casperjs fetch.js namn lösen --anlid=1234567890\n\nFick:\n"+casper.cli.get(0)+"\n"+casper.cli.get(1)+"\n"+casper.cli.raw.get('anlid')).exit();
 }
@@ -19,6 +20,11 @@ var anvNamn = casper.cli.get(0);
 var losenord = casper.cli.get(1);
 var now = new Date();
 var startDag = now.getDate() -1;
+var viewstate;
+var ctl00$cphBody$ScriptManager1;
+var eventvalidation;
+var ctl00$cphBody$txtSessionTimeOut;
+var ctl00$cphBody$ucYearPicker$txtYear;
 
 casper.options.viewportSize = {width: 1280, height: 673};
 casper.start('https://gbgc.goteborgenergi.se/main/default.asp');
@@ -81,16 +87,46 @@ casper.waitForSelector(x("//a[normalize-space(text())='"+ anlId +"']"),
 casper.waitForSelector("#cphBody_lbDay",
     function success() {
         this.test.assertExists("#cphBody_lbDay");
-		this.evaluate(function() {
-		    $('#__EVENTTARGET').val('ctl00$cphBody$lbDay');
-			$('#form1').submit();
-			//TESTADE...
-			//__doPostBack('ctl00$cphBody$lbDay','');
-			//document.querySelector("#cphBody_lbDay").click();
-			//$("#cphBody_lbDay").attr('onclick',$("#cphBody_lbDay").attr('href');
-			//__utils__.mouseEvent('click',"#cphBody_lbDay");
+		viewstate = this.evaluate(function() {
+			return $('input[name="__VIEWSTATE"]').val();
 		});
-        //this.click("#cphBody_lbDay");//Misslyckas varje gång...
+		eventvalidation = this.evaluate(function() {
+			return $('input[name="__EVENTVALIDATION"]').val();
+		});
+		ctl00$cphBody$ScriptManager1 = this.evaluate(function() {
+			return $('input[name="ctl00$cphBody$ScriptManager1"]').val();
+		});
+		ctl00$cphBody$txtSessionTimeOut = this.evaluate(function() {
+			return $('input[name="ctl00$cphBody$txtSessionTimeOut"]').val();
+		});
+		ctl00$cphBody$ucYearPicker$txtYear = this.evaluate(function() {
+			return $('input[name="ctl00$cphBody$ucYearPicker$txtYear"]').val();
+		});
+		//this.echo('__EVENTVALIDATION'+eventvalidation);
+		//this.echo('ctl00$cphBody$ScriptManager1 '+ctl00$cphBody$ScriptManager1);
+		//this.echo('ctl00$cphBody$txtSessionTimeOut '+ctl00$cphBody$txtSessionTimeOut);
+		//this.echo('ctl00$cphBody$ucYearPicker$txtYear '+ctl00$cphBody$ucYearPicker$txtYear);
+		var url_now = this.getCurrentUrl();
+		this.echo("Försöker posta mot url: "+url_now);
+		this.evaluate(function(url) {
+			$.ajax({
+				url: url_now,
+				type: 'POST',
+				data: { 
+						'__EVENTTARGET': 'ctl00%24cphBody%24lbDay',  
+						'__EVENTARGUMENT': '', 
+						'__VIEWSTATE': viewstate, 
+						'__EVENTVALIDATION': eventvalidation, 
+						'ctl00$cphBody$ucYearPicker$txtYear': ctl00$cphBody$ucYearPicker$txtYear,
+						'ctl00$cphBody$txtSessionTimeOut': ctl00$cphBody$txtSessionTimeOut, 
+						'ctl00$cphBody$ScriptManager1': 'ctl00%24cphBody%24pnlUpdatePanel%7Cctl00%24cphBody%24lbDay', 
+						'__ASYNCPOST': 'true'
+						}
+			}).done(function(data){__utils__.echo(data);})
+			.fail(function() { __utils__.echo("error"); })
+			.always(function() { __utils__.echo("finished"); });;
+		}, url_now);
+		this.wait(5000);
     },
     function fail() {
         this.test.assertExists("#cphBody_lbDay");
